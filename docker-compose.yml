@@ -3,7 +3,7 @@ version: '3.8'
 services:
   api:
     build: .
-    image: ${{ secrets.CR_USER }}/my_fastapi_app:latest  # nom explicite de cette image
+    image: my_fastapi_app:latest  # nom explicite de cette image
     container_name: fastapi_app
     ports:
       - "8000:8000"
