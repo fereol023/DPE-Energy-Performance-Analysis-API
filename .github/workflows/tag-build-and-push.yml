@@ -130,7 +130,7 @@ jobs:
         IMAGE_FULL_NAME="${{ secrets.CR_USER }}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
         echo "Docker image name: ${IMAGE_FULL_NAME}"
         docker-compose build --no-cache
-        docker tag "${{ secrets.CR_USER }}/my_fastapi_app:latest" "$IMAGE_FULL_NAME" # re-applique le bon tag sur l'image contruite 
+        docker tag "my_fastapi_app:latest" "$IMAGE_FULL_NAME" # re-applique le bon tag sur l'image contruite 
         echo "docker_image_built=${IMAGE_FULL_NAME}" >> "$GITHUB_ENV"
 
     - name: Push Docker image
