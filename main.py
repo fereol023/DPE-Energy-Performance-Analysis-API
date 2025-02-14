@@ -9,6 +9,11 @@ client = MongoClient(MONGO_URI)
 db = client.mydatabase
 collection = db.mycollection
 
+@app.post("/")
+async def start():
+    """Ajoute un document dans MongoDB."""
+    return {"MSG": "Hello from api module"}
+
 @app.post("/write/")
 async def write_data(data: dict):
     """Ajoute un document dans MongoDB."""
