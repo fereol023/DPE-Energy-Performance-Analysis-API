@@ -4,7 +4,7 @@ import os
 
 app = FastAPI()
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/mydatabase")
+MONGO_URI = "mongodb://localhost:27017/mydatabase" if False else "mongodb://mongo:27017" # if config = local
 
 client = MongoClient(MONGO_URI)
 db = client["dpe_database"]
