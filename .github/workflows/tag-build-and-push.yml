@@ -81,6 +81,7 @@ jobs:
           else
             TAG_SUFFIX="rc-${GITHUB_RUN_ID:0:3}"
             MINOR_VERSION=$(( ${{ steps.extract-and-set-minor-and-major-versions.outputs.MINOR_VERSION }} ))
+            echo "The new tag ends with ${MINOR_VERSION} and ${TAG_SUFFIX}"
           fi
           echo "tag_suffix=${TAG_SUFFIX}" >> $GITHUB_OUTPUT
           echo "MINOR_VERSION=${MINOR_VERSION}" >> $GITHUB_OUTPUT
