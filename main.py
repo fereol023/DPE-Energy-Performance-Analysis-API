@@ -1,6 +1,6 @@
+import os
 from fastapi import FastAPI
 from pymongo import MongoClient
-import os
 
 app = FastAPI()
 
