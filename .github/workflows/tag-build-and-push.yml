@@ -18,8 +18,6 @@ jobs:
       - name: Extract latest tag
         id: extract-latest-tag
         run: |
-          git fetch --tags
-          git pull --tags
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG"
