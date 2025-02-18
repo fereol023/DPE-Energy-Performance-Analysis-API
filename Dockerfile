@@ -1,4 +1,8 @@
 FROM python:3.9-alpine
+ENV DB_HOST=""
+ENV DB_PORT=""
+ENV DB_USER=""
+ENV DB_PWD=""
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
