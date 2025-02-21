@@ -1,4 +1,5 @@
 FROM python:3.9-alpine
+ENV ENVIRONMENT=""
 ENV DB_HOST=""
 ENV DB_PORT=""
 ENV DB_USER=""
