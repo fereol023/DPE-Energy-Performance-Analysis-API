@@ -1,6 +1,3 @@
-[submodule "engine/dpe"]
-	path = engine/dpe
-	url = https://github.com/fereol023/DPE-Energy-Performance-Analysis-ETL.git
 [submodule "etl_engine"]
 	path = etl_engine
 	url = https://github.com/fereol023/DPE-Energy-Performance-Analysis-ETL.git
