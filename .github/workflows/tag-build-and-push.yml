@@ -53,14 +53,13 @@ jobs:
           
       - name: Check branch name and commit message
         id: check-branch-and-message
-        run: |
+        run: | # check if the merge commit message contains 'final' or if the branch is a release candidate
           BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
           COMMIT_MESSAGE=$(git log -1 --format=%B)
-          MINOR_VERSION=$(( ${{ steps.extract-and-set-minor-and-major-versions.outputs.MINOR_VERSION }} ))
           echo "On branch: $BRANCH_NAME and latest commit message: $COMMIT_MESSAGE"
-          if echo "${COMMIT_MESSAGE}" | grep -q 'final'; then
+          if echo "${COMMIT_MESSAGE}" | grep -q 'final'; then 
             TAG_SUFFIX=""
-            MINOR_VERSION=$((MINOR_VERSION + 1))
+            MINOR_VERSION=$(( ${{ steps.extract-and-set-minor-and-major-versions.outputs.MINOR_VERSION }} + 1 ))
             echo "The new tag ends with ${MINOR_VERSION} and ${TAG_SUFFIX}"
           else
             LAST_RC_TAG=$(git describe --tags --match '*rc-*' $(git rev-list --tags --max-count=1))
@@ -71,9 +70,11 @@ jobs:
               RC_NUM=$((RC_NUM + 1))  # Increment the RC number by 1
               echo "Incremented RC Number: $RC_NUM"  # Echo the incremented RC number
               TAG_SUFFIX="rc-${RC_NUM}"
+              MINOR_VERSION=$(( ${{ steps.extract-and-set-minor-and-major-versions.outputs.MINOR_VERSION }} ))
               echo "The new tag ends with ${MINOR_VERSION} and ${TAG_SUFFIX}"
             else
               TAG_SUFFIX="rc-0" # if not a rc tag like v0.1 set a new rc tags series and keep th same minor v0.1.rc-2
+              MINOR_VERSION=$(( ${{ steps.extract-and-set-minor-and-major-versions.outputs.MINOR_VERSION }} ))
               echo "The new tag ends with ${MINOR_VERSION} and ${TAG_SUFFIX}"
             fi
           fi
