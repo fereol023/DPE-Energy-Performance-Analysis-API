@@ -5,7 +5,7 @@ from api_utils.fonctions import set_config_as_env_var as set_config
 # ajouter le module engine pour qu'il soit 
 # importé par le routeur qui exec le flow
 CURRENT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
-ENGINE_DIRPATH = os.path.join(CURRENT_DIRPATH, "engine")
+ENGINE_DIRPATH = os.path.join(CURRENT_DIRPATH, "etl_engine")
 assert os.path.exists(ENGINE_DIRPATH), f"Le path de l'engine n'existe pas : {ENGINE_DIRPATH}"
 sys.path.append(ENGINE_DIRPATH)
 
