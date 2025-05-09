@@ -1,0 +1,61 @@
+services:
+
+  # api:
+  #   build: DPE-Energy-Performance-Analysis-API/.
+  #   image: dpe-api:latest  # nom explicite de l'image de l'api # actualiser avec le dernier tag du repos de l'api # recup le nom sur 
+  #   container_name: fastapi
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - mongo
+  #   environment:
+  #     ENVIRONMENT: PROD
+  #     DB_HOST: mongo
+  #     DB_PORT: 27017 # dans le reseau la db est sur ce port 
+  #     DB_USER: dpeapi
+  #     DB_PWD: pwddpeapi
+  #   networks:
+  #     - dpe-network
+  #   links:
+  #     - mongo
+
+  db:
+    image: postgres
+    container_name: dpe-dbserver
+    restart: always
+    ports:
+      - "5432:5432"
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
+    volumes:
+      - ./storage/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password # ${POSTGRES_PASSWORD} to set into .env file (root)
+      POSTGRES_DB: dpedb
+
+  minio:
+    image: "minio/minio:latest"
+    container_name: dpe-filestorage
+    restart: always
+    ports:
+        - "9000:9000"
+        - "8900:8900"
+    volumes:
+        - ./storage/minio:/data/minio
+    environment:
+        MINIO_ROOT_USER: minio
+        MINIO_ROOT_PASSWORD: password
+    command: 'minio server /data/minio --console-address ":8900"'
+    healthcheck:
+        test:
+            - CMD
+            - curl
+            - '-f'
+            - 'http://localhost:9000/minio/health/live'
+        retries: 3
+        timeout: 5s
+
+volumes:
+    minio:
+        driver: local
