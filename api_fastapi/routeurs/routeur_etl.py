@@ -2,7 +2,7 @@ import os, asyncio
 from fastapi import APIRouter, HTTPException
 
 import engine_test
-from engine.src.pipelines.etl_app import etl_flow
+from etl_engine.src.pipelines.etl_app import etl_flow
 
 router = APIRouter()
 _etl_tag = ["ETL module"]
