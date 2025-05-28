@@ -1,4 +1,4 @@
-import os
+import os, importlib
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -73,3 +73,10 @@ async def get_deperd_by_dpe():
 
 
 #### logements
+
+
+#### model
+@router.get("/model/{version}/config")
+async def get_model_config(version):
+    module = importlib.import_module(f"ressources.models.{version}.model_config")
+    return module.model_config

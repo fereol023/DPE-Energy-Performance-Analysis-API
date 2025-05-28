@@ -1,4 +1,4 @@
-import os, logging
+import os, logging, httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers = headers
 )
 
-app.get("/", tags=["ping 🙋‍♂️"])
+@app.get("/", tags=["ping 🙋‍♂️"])
 def start():
     logging.INFO("Server started !")
     return {
@@ -34,6 +34,50 @@ def start():
         "version": os.getenv("app-version"),
         "env": os.getenv("ENV")
     }
+
+@app.get("/health", tags=["health check"])
+def health_check():
+    """
+    Health check endpoint to verify if the server is running.
+    """
+    return {"status": "ok", "message": "Server is running!"}
+
+
+@app.get("/price_kwh", tags=["price"])
+def get_kwh_price():
+    """
+    Endpoint to get the price of kWh in euros.
+    This call another public api to get the current price.
+    """
+
+    URL_PRICING_KWH, prix_bckp = "https://open-dpe.fr/api/v1/electricity.php?tarif=EDF_bleu", 0.216
+
+    metadata_tarif = {
+        'source': 'EDF - Tarif Bleu (API real time)',
+        'description': 'Tarif reglementé - fixé par les pouvoirs publics.',
+        'url': 'https://particulier.edf.fr/fr/accueil/electricite-gaz/tarif-bleu.html',
+        'date_tarif': '01/02/2025',
+        'date_extraction': '09/02/2025',
+        'prix_kwh_base': prix_bckp, # prix backp
+        'prix_hc': 'NC',
+        'prix_hp': 'NC'
+    }
+
+    try:
+        query_pricing = httpx.get(URL_PRICING_KWH, timeout=30) # 30s timeout
+        if query_pricing.status_code == 200:
+            res = query_pricing.json()
+            metadata_tarif.update({
+                'date_tarif': res.get('date_tarif', 'NA'),
+                'date_extraction': res.get('date_extraction', 'NA'),
+                'prix_kwh_base': res.get('options', {}).get('base', {}).get('prix_kWh', prix_bckp),
+            })
+    except httpx.TimeoutException:
+        print("Timeout occurred while fetching pricing data.")
+    except Exception as e:
+        print(f"Error occurred while fetching pricing data: {e}")
+    finally:
+        return metadata_tarif
 
 app.include_router(routeur_bdd.router)
 app.include_router(routeur_etl.router)
