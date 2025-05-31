@@ -23,10 +23,44 @@ class AdressesDAO:
             res = self.cursor.execute(
                 sql.SQL("SELECT * FROM {};").format(sql.Identifier(self.table_name))
                 )
-            res = self.cursor.fetchall(), None
+            res, excp = self.cursor.fetchall(), None
             logging.info("(ok) select from adresses dao..")
         except Exception as e:
-            res = None, str(e)
+            res, excp = None, str(e)
             logging.info("(ko) select from adresses dao..")
         finally:
-            return res
+            return res, excp
+        
+    def select_all_adresses_labels(self) -> List[str]:
+        """
+        Select all addresses labels from the database.
+        :return: a list of addresses labels
+        """
+        try:
+            query = sql.SQL("SELECT label_ban FROM {};").format(sql.Identifier(self.table_name))
+            self.cursor.execute(query)
+            res, excp = [row[0] for row in self.cursor.fetchall()], None
+            logging.info("(ok) select adresses labels from adresses dao..")
+        except Exception as e:
+            res, excp = None, str(e)
+            logging.info("(ko) select adresses labels from adresses dao..")
+        finally:
+            return res, excp
+
+    def select_one_adress(self, searched: str) -> List[Dict]:
+        """
+        Select all from addresses from searched one.
+        :param searched: the searched address
+        :return: all data from the searched address
+        """
+        try:
+            query = sql.SQL("SELECT * FROM {} WHERE LOWER(label_ban) LIKE LOWER(%s);").format(sql.Identifier(self.table_name))
+            self.cursor.execute(query, [f"%{searched}%"])
+            res, excp = self.cursor.fetchall(), None
+            logging.info("(ok) select similar from adresses dao..")
+        except Exception as e:
+            res, excp = None, str(e)
+            logging.info("(ko) select similar from adresses dao..")
+        finally:
+            return res, excp
+        

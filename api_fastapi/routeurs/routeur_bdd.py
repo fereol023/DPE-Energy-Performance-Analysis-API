@@ -36,6 +36,14 @@ async def connect_as_reader():
 
 @router.get("/db/writer/", tags=_bdd_tag)
 async def connect_as_writer():
+    """
+    Placeholder // no more implemented because
+    etl engine uses sqlalchemy driectly to 
+    write in the database (31/05/25)
+    ----
+    maybe evolution to a writer role
+    for the app client to write in the database.
+    """
     pass
 
 
@@ -45,6 +53,30 @@ async def connect_as_writer():
 @router.get("/db/reader/adresses/getall", tags=_bdd_tag)
 async def get_all_adresses(request: Request):
     rep, exp = adressesC.get_all_adresses()
+    return {"data": rep, "error": exp}
+
+
+@exception_handler
+@validate_reader_handler
+@router.get("/db/reader/adresses/searchadress/{searched}", tags=_bdd_tag)
+async def search_adresses(request: Request, searched: str):
+    """
+    Get all adresses similar to the searched one.
+    :param searched: the searched address
+    :return: a list of similar addresses
+    """
+    rep, exp = adressesC.search_adress(searched)
+    return {"data": rep, "error": exp}
+
+
+@router.get("/db/reader/adresses/getone/{searched}", tags=_bdd_tag)
+async def search_adresses(request: Request, searched: str):
+    """
+    Get all adresses similar to the searched one.
+    :param searched: the searched address
+    :return: a list of similar addresses
+    """
+    rep, exp = adressesC.get_one_adress(searched)
     return {"data": rep, "error": exp}
 
 
