@@ -53,7 +53,7 @@ def get_kwh_price():
     URL_PRICING_KWH, prix_bckp = "https://open-dpe.fr/api/v1/electricity.php?tarif=EDF_bleu", 0.216
 
     metadata_tarif = {
-        'source': 'EDF - Tarif Bleu (API real time)',
+        'source': URL_PRICING_KWH,
         'description': 'Tarif reglementé - fixé par les pouvoirs publics.',
         'url': 'https://particulier.edf.fr/fr/accueil/electricite-gaz/tarif-bleu.html',
         'date_tarif': '01/02/2025',
@@ -65,13 +65,13 @@ def get_kwh_price():
 
     try:
         query_pricing = httpx.get(URL_PRICING_KWH, timeout=30) # 30s timeout
-        if query_pricing.status_code == 200:
-            res = query_pricing.json()
-            metadata_tarif.update({
-                'date_tarif': res.get('date_tarif', 'NA'),
-                'date_extraction': res.get('date_extraction', 'NA'),
-                'prix_kwh_base': res.get('options', {}).get('base', {}).get('prix_kWh', prix_bckp),
-            })
+        query_pricing.raise_for_status()  # raise an error for bad responses
+        res = query_pricing.json()
+        metadata_tarif.update({
+            'date_tarif': res.get('date_tarif', 'NA'),
+            'date_extraction': res.get('date_extraction', 'NA'),
+            'prix_kwh_base': res.get('options', {}).get('base', {}).get('prix_kWh', prix_bckp),
+        })
     except httpx.TimeoutException:
         print("Timeout occurred while fetching pricing data.")
     except Exception as e:

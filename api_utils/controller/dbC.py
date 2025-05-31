@@ -3,8 +3,7 @@ from api_utils.commons import Connexion, ConnexionType
 from api_utils.queries import (
     db as db_queries,
     adresses as adresses_queries,
-    batiments as batiments_queries,
-    consommations as consos_queries
+    logements as logements_queries,
 )
 from api_utils.commons import get_env_variable
 
@@ -40,8 +39,7 @@ def init():
     if eval(get_env_variable("VERBOSE", "1"))==1:
         print("Starting creating tables...")
     migrations = [
-        (consos_queries.create_table, "create consommations table"),
-        (batiments_queries.create_table, "create batiments table"),
+        (logements_queries.create_table, "create logements table"),
         (adresses_queries.create_table, "create adresses table"), # contraintes d'integrité
     ]
 
