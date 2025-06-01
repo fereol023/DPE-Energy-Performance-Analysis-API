@@ -3,7 +3,7 @@ from api_fastapi import validate_reader_identity
 import asyncio
 
 
-def exception_handler(if_error_status=500):
+def my_exception_handler(if_error_status=500):
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:

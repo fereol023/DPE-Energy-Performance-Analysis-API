@@ -3,17 +3,24 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api_fastapi.routeurs import routeur_bdd, routeur_etl, routeur_s3
-
+from api_fastapi.exceptions import my_exception_handler
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+def lifespan(_):
+    print(f"➡️ Startup server".center(os.get_terminal_size().columns))
+    yield
+    print("❌ Shutdown server".center(os.get_terminal_size().columns))
+
 app = FastAPI(
     title = os.getenv("app-name", ""),
     description = os.getenv("app-description"),
-    version = os.getenv("app-version") # lire depuis le fichier VERSION a la racine
+    version = os.getenv("app-version"), # lire depuis le fichier VERSION a la racine
+    # lifespan = lifespan,
+    docs_url = "/docs", # /docs
 )
 
 origins, methods, headers = ["*"], ["*"], ["*"] 
@@ -26,8 +33,8 @@ app.add_middleware(
 )
 
 @app.get("/", tags=["ping 🙋‍♂️"])
-def start():
-    logging.INFO("Server started !")
+async def start():
+    logging.info("Server started !")
     return {
         "message": "Ping hello from server !",
         "app-name": os.getenv("app-name"),
@@ -36,7 +43,7 @@ def start():
     }
 
 @app.get("/health", tags=["health check"])
-def health_check():
+async def health_check():
     """
     Health check endpoint to verify if the server is running.
     """
@@ -44,7 +51,7 @@ def health_check():
 
 
 @app.get("/price_kwh", tags=["price"])
-def get_kwh_price():
+async def get_kwh_price():
     """
     Endpoint to get the price of kWh in euros.
     This call another public api to get the current price.

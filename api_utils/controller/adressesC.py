@@ -70,15 +70,14 @@ def get_one_adress(searched: str, *args, **kwargs):
     return rep, exp
 
 
-def get_average_data_on_one_adress(searched: str, *args, **kwargs):
+def get_cities_names_and_codes(*args, **kwargs):
     """
-    Get average data on one address.
-    :param searched: the searched address
-    :return: average data on the searched address
+    Get all cities names and codes from the database.
+    :return: a list of dictionaries with city names and codes
     """
-    # placeholder 
-    return {}, None
-
-
-def count_logements_on_one_adress(searched: str, *args, **kwargs):
-    return 0, None
+    rep, exp = AdressesDAO(*args, **kwargs).select_cities_names_and_codes()
+    if exp:
+        return [], exp
+    if not rep:
+        return [], "No cities found."
+    return rep, exp
