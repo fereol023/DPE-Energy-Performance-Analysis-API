@@ -6,33 +6,12 @@ on:
         - dev*
         - main
 jobs:
-    clone-submodules:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout repository
-            uses: actions/checkout@v3
-            with:
-                fetch-depth: 0
-                submodules: 'recursive'
-    
-          - name: Clone etl_engine submodule
-            run: |
-              git submodule update --init --recursive
-              cd etl_engine
-              git checkout main
-              cd ..
-              echo "-> API repos files === "
-              ls
-              cd etl_engine
-              echo "-> Engine repos files === "
-              ls 
-              cd ..
-
     call-github-python-pytests-workflow:
         # {owner}/{repo}/.github/workflows/{filename}@{ref}
         uses: fereol023/pipelines_templates/.github/workflows/github-python-pytests.yml@main
         with:
             pythonVersion: 3.12
+            hasSubmodules: true
     # call-github-python-linter-workflow:
     #     uses: fereol023/pipelines_templates/.github/workflows/github-python-linter.yml@main
     #     with: 
