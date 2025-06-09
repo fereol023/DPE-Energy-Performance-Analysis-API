@@ -21,7 +21,10 @@ jobs:
               cd etl_engine
               git checkout main
               cd ..
-              ls -a
+              ls
+              cd etl_engine
+              ls 
+              cd ..
 
     call-github-python-pytests-workflow:
         # {owner}/{repo}/.github/workflows/{filename}@{ref}
