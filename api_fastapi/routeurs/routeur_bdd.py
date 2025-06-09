@@ -77,15 +77,19 @@ async def search_adresses(request: Request, searched: str):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/adresses/getone/{searched}", tags=_bdd_tag+_adresses_tag)
-async def search_adresses(request: Request, searched: str):
+@router.get("/db/reader/adresses/getone/{searched_adress}", tags=_bdd_tag+_adresses_tag)
+async def search_adresses(request: Request, searched_adress: str):
     """
     Get all adresses similar to the searched one.
     :param searched: the searched address
     :return: a list of similar addresses
     """
-    rep, exp = adressesC.get_one_adress(searched)
-    return {"data": rep, "error": exp}
+    # validate adress format
+    if searched_adress and len(searched_adress) > 3:
+        rep, exp = adressesC.get_one_adress(searched_adress)
+        return {"data": rep, "error": exp}
+    else:
+        raise HTTPException(status_code=400, detail="Searched address must be at least 3 characters long.")
 
 
 @my_exception_handler
@@ -97,6 +101,17 @@ async def get_cities_names_and_codes(request: Request):
     :return: a list of cities names and codes
     """
     rep, exp = adressesC.get_cities_names_and_codes()
+    return {"data": rep, "error": exp}
+
+@my_exception_handler
+@validate_reader_handler
+@router.get("/db/reader/adresses/{city_name}/allcoords", tags=_bdd_tag+_adresses_tag)
+async def get_coord_by_city_name(request: Request, city_name: str):
+    """
+    Get longitudes, latitudes by city name.
+    :return: a list of cities names
+    """
+    rep, exp = adressesC.get_coord_by_city_name(city_name)
     return {"data": rep, "error": exp}
 
 
@@ -148,6 +163,12 @@ async def get_all_logements_by_city_name(request: Request, city_name: str):
     """
     rep, exp = logementsC.get_logements_by_city_name(city_name, nrows=-1)
     return {"data": rep, "error": exp}
+
+# TODO:
+## get all logements by city and arrondissement -> add filter on arr
+## get all logements by city and arrondissement and data year -> add filter on arr
+## get only consommations by city -> use to plot distribution train vs history 
+## send schema of both tables logements and adresses -> schema for batch mode
 
 #### model
 @router.get("/model/{version}/config")

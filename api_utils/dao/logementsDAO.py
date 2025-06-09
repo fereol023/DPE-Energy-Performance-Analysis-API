@@ -24,6 +24,7 @@ class LogementsDAO:
                 sql.SQL("SELECT * FROM {};").format(sql.Identifier(self.table_name))
                 )
             res, excp = self.cursor.fetchall(), None
+            res = [dict(zip([desc[0] for desc in self.cursor.description], row)) for row in res]
             logging.info("(ok) select from logements dao..")
         except Exception as e:
             res, excp = None, str(e)
@@ -46,6 +47,7 @@ class LogementsDAO:
             """).format(sql.Identifier(self.table_name))
             self.cursor.execute(query, [f"%{searched}%"])
             res, excp = self.cursor.fetchall(), None
+            res = [dict(zip([desc[0] for desc in self.cursor.description], row)) for row in res]
             logging.info("(ok) select similar from logementss dao..")
         except Exception as e:
             res, excp = None, str(e)
@@ -64,19 +66,20 @@ class LogementsDAO:
             if nrows > 0:
                 query = sql.SQL("""
                     SELECT l.* FROM {} AS l
-                    LEFT JOIN adresses AS a ON l._id_ademe = a._id_ademe
-                    WHERE LOWER(a.label_ban) LIKE LOWER(%s)
+                    LEFT JOIN adresses AS a ON l.id_ban = a.id_ban
+                    WHERE LOWER(a.city_ban) LIKE LOWER(%s)
                     LIMIT %s;
                 """).format(sql.Identifier(self.table_name))
                 self.cursor.execute(query, [f"%{city_name}%", nrows])
             else:
                 query = sql.SQL("""
                     SELECT l.* FROM {} AS l
-                    LEFT JOIN adresses AS a ON l._id_ademe = a._id_ademe
-                    WHERE LOWER(a.label_ban) LIKE LOWER(%s);
+                    LEFT JOIN adresses AS a ON l.id_ban = a.id_ban
+                    WHERE LOWER(a.city_ban) LIKE LOWER(%s);
                 """).format(sql.Identifier(self.table_name))
                 self.cursor.execute(query, [f"%{city_name}%"])
             res, excp = self.cursor.fetchall(), None
+            res = [dict(zip([desc[0] for desc in self.cursor.description], row)) for row in res]
             logging.info("(ok) select logements by city name from logements dao..")
         except Exception as e:
             res, excp = None, str(e)

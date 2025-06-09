@@ -53,6 +53,7 @@ def search_adress(searched: str="", threshold=0.8, *args, **kwargs):
     if not similar_adresses:
         return [], "No similar addresses found."
     similar_adresses = [item[1] for item in similar_adresses]  # keep only the address and score
+    similar_adresses = [dict(zip(["adresse", "score confiance"], item)) for item in similar_adresses]
     return similar_adresses, exp
     
 
@@ -80,4 +81,17 @@ def get_cities_names_and_codes(*args, **kwargs):
         return [], exp
     if not rep:
         return [], "No cities found."
+    return rep, exp
+
+
+def get_coord_by_city_name(city_name: str, *args, **kwargs):
+    """
+    Get longitudes, latitudes by city name.
+    :return: a list of dictionaries with city names and coordinates
+    """
+    rep, exp = AdressesDAO(*args, **kwargs).select_coord_by_city_name(city_name)
+    if exp:
+        return [], exp
+    if not rep:
+        return [], "No coordinates found for the given city."
     return rep, exp
