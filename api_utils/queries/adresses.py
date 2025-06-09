@@ -1,22 +1,14 @@
 create_table = """
 CREATE TABLE IF NOT EXISTS adresses (
     id_ban VARCHAR PRIMARY KEY,
-    _id_ademe VARCHAR NOT NULL,
-    _geopoint_ademe VARCHAR DEFAULT 'N/C',
-    _i_ademe VARCHAR DEFAULT 'N/C',
-    _rand_ademe VARCHAR DEFAULT 'N/C',
-    _score_ademe VARCHAR DEFAULT 'N/C',
+    _id_ademe VARCHAR DEFAULT 'N/C',
     _type_ban VARCHAR DEFAULT 'N/C',
     adresse_ban_ademe VARCHAR DEFAULT 'N/C',
-    adresse_brute_ademe VARCHAR DEFAULT 'N/C',
     adresse_enedis VARCHAR DEFAULT 'N/C',
-    banid_ban VARCHAR DEFAULT 'N/C',
     city_ban VARCHAR DEFAULT 'N/C',
     citycode_ban VARCHAR DEFAULT 'N/C',
     code_commune_enedis VARCHAR DEFAULT 'N/C',
     code_departement_enedis VARCHAR DEFAULT 'N/C',
-    code_epci_enedis VARCHAR DEFAULT 'N/C',
-    code_insee_ban_ademe VARCHAR DEFAULT 'N/C',
     code_iris_enedis VARCHAR DEFAULT 'N/C',
     code_postal_ban_ademe VARCHAR DEFAULT 'N/C',
     code_postal_brut_ademe VARCHAR DEFAULT 'N/C',
@@ -51,7 +43,6 @@ CREATE TABLE IF NOT EXISTS adresses (
     x_ban VARCHAR DEFAULT 'N/C',
     y_ban VARCHAR DEFAULT 'N/C',
     zone_climatique_ademe VARCHAR DEFAULT 'N/C',
-    FOREIGN KEY (_id_ademe) REFERENCES batiments(_id_ademe) ON DELETE CASCADE,
-    FOREIGN KEY (id_ban) REFERENCES consommations(id_ban) ON DELETE CASCADE
+    FOREIGN KEY (_id_ademe) REFERENCES logements(_id_ademe) ON DELETE CASCADE
 )
 """

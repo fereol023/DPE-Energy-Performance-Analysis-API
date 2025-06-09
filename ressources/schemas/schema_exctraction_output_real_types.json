@@ -1,5 +1,5 @@
 {
-    "_geopoint_ademe": "datetime64[ns]",
+    "_geopoint_ademe": "string",
     "_i_ademe": "int64",
     "_id_ademe": "string",
     "_rand_ademe": "int64",
