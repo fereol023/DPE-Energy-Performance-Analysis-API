@@ -21,8 +21,10 @@ jobs:
               cd etl_engine
               git checkout main
               cd ..
+              echo "-> API repos files === "
               ls
               cd etl_engine
+              echo "-> Engine repos files === "
               ls 
               cd ..
 
