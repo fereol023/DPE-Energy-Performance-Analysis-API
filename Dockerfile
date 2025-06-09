@@ -2,7 +2,8 @@ FROM python:3.12
 WORKDIR /app
 COPY requirements.txt .
 COPY . .
-RUN apk add --no-cache git && \
+RUN apt-get update && \
+    apt-get install -y git && \
     git submodule update --init --recursive && \
     git submodule foreach 'git checkout main || :'
     # git submodule foreach 'cd $toplevel'
