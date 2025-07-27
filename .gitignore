@@ -1,3 +1,4 @@
+etl/
 storage/
 config/secrets.json
 ressources/data/
@@ -9,6 +10,7 @@ ressources/data/
 
 # C extensions
 *.so
+**DS_Store
 
 # Distribution / packaging
 .Python

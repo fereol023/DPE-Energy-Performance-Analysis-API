@@ -1,9 +1,16 @@
-import numpy as np, pandas as pd
+import numpy as np
+import pandas as pd
 from functools import lru_cache
 from unidecode import unidecode
 from datetime import datetime
 
-import re, pickle, os, json, yaml, logging
+import os
+import re
+import json
+import yaml
+import pickle
+import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -56,7 +63,6 @@ def sort_colnames(df):
 
 def normalize_df_colnames(df):
     return sort_colnames(df.rename(columns={c: normalize_name(unidecode(c)).lower() for c in df.columns}))
-
 
 
 def get_today_date():

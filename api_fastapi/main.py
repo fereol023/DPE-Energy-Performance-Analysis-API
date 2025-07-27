@@ -2,8 +2,11 @@ import os, logging, httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api_fastapi.routeurs import routeur_bdd, routeur_etl, routeur_s3
-from api_fastapi.exceptions import my_exception_handler
+from api_fastapi.routeurs import (
+    routeur_bdd, routeur_etl, routeur_s3, routeur_elk
+)
+
+from api_utils.commons import get_env_variable
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,9 +19,9 @@ def lifespan(_):
     print("❌ Shutdown server".center(os.get_terminal_size().columns))
 
 app = FastAPI(
-    title = os.getenv("app-name", ""),
-    description = os.getenv("app-description"),
-    version = os.getenv("app-version"), # lire depuis le fichier VERSION a la racine
+    title = get_env_variable("APP_NAME", compulsory=True),
+    description = get_env_variable("APP_DESCRIPTION"),
+    version = get_env_variable("APP_VERSION", compulsory=True), # lire depuis le fichier VERSION a la racine
     # lifespan = lifespan,
     docs_url = "/docs", # /docs
 )
@@ -37,9 +40,9 @@ async def start():
     logging.info("Server started !")
     return {
         "message": "Ping hello from server !",
-        "app-name": os.getenv("app-name"),
-        "version": os.getenv("app-version"),
-        "env": os.getenv("ENV")
+        "app-name": get_env_variable("APP_NAME"),
+        "version": get_env_variable("APP_VERSION"),
+        "env": get_env_variable("ENV")
     }
 
 @app.get("/health", tags=["health check"])
@@ -57,11 +60,11 @@ async def get_kwh_price():
     This call another public api to get the current price.
     """
 
-    URL_PRICING_KWH, prix_bckp = "https://open-dpe.fr/api/v1/electricity.php?tarif=EDF_bleu", 0.216
+    URL_PRICING_KWH, prix_bckp = "https://open-dpe.fr/api/v1/electricity.php?tarif=EDF_bleu", 0.200
 
     metadata_tarif = {
         'source': URL_PRICING_KWH,
-        'description': 'Tarif reglementé - fixé par les pouvoirs publics.',
+        'description': 'Tarif EDF reglementé - fixé par les pouvoirs publics.',
         'url': 'https://particulier.edf.fr/fr/accueil/electricite-gaz/tarif-bleu.html',
         'date_tarif': '01/02/2025',
         'date_extraction': '09/02/2025',
@@ -89,3 +92,4 @@ async def get_kwh_price():
 app.include_router(routeur_bdd.router)
 app.include_router(routeur_etl.router)
 app.include_router(routeur_s3.router)
+app.include_router(routeur_elk.router)

@@ -12,13 +12,11 @@ from api_fastapi import (
     validate_reader_identity
 )
 from api_utils.controller import dbC, adressesC, logementsC
-
+from api_utils.model import authHelperM
 
 router = APIRouter()
 
-_bdd_tag = ["BDD"]
-_logements_tag = ["Logements"]
-_adresses_tag = ["Adresses"]
+_bdd_tag = ["database"]
 
 @router.get("/db", tags=_bdd_tag)
 async def init_db():
@@ -30,17 +28,33 @@ async def init_db():
     finally:
         return {
             "message": "hello from db router !",
-            "reader-token": create_reader_jwt_token(), # generate cookie for client TODO ok
-            "reader-token-validity-hours": os.getenv("JWT_TOKEN_EXPIRATION_HOURS", "1"),
             "db state": state
         }
     
 #### log in
-@router.get("/db/reader/", tags=_bdd_tag)
-async def connect_as_reader():
-    pass
+@router.post("/db/request/reader/", tags=_bdd_tag)
+async def request_access_as_reader(user: authHelperM.UserWithEmail):
+    """
+    Requires a valid email adress (uses jwt token) (saved or not).
+    ----------
+    Provides a limited jwt access token and store it as 
+    cookie to client machine.
+    A client machine has to start with this endpoint
+    to retrieve data.
+    JWT_TOKEN_EXPIRATION_HOURS is set as env variable
+    on server side to be flexible. Default is 1 hour.
+    ----------
+    uses the smtp server to send mail with the token to the user.
+    """
+    # return {"message": f"User {user.name} created with email {user.email}"}
 
-@router.get("/db/writer/", tags=_bdd_tag)
+    return {
+        "message": "This is your 1 hour valid reader token.",
+        "reader-token": create_reader_jwt_token(), # generate cookie for client TODO ok
+        "reader-token-validity-hours": os.getenv("JWT_TOKEN_EXPIRATION_HOURS", "1")
+        }
+
+@router.get("/db/auth/writer/", tags=_bdd_tag)
 async def connect_as_writer():
     """
     Placeholder // no more implemented because
@@ -52,11 +66,19 @@ async def connect_as_writer():
     """
     pass
 
+@router.get("/db/auth/writer/", tags=_bdd_tag)
+async def connect_as_reader():
+    """
+    Authentifies whether a query on data endpoints 
+    has reader access.
+    """
+    pass
+
 
 #### adresses 
 @my_exception_handler
 @validate_reader_handler # hide underneath complexity of token validation inside decorator
-@router.get("/db/reader/adresses/getall", tags=_bdd_tag+_adresses_tag)
+@router.get("/db/reader/adresses/getall", tags=_bdd_tag)
 async def get_all_adresses(request: Request):
     rep, exp = adressesC.get_all_adresses()
     return {"data": rep, "error": exp}
@@ -64,7 +86,7 @@ async def get_all_adresses(request: Request):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/adresses/searchadress/{searched}", tags=_bdd_tag+_adresses_tag)
+@router.get("/db/reader/adresses/searchadress/{searched}", tags=_bdd_tag)
 async def search_adresses(request: Request, searched: str):
     """
     Get all adresses similar to the searched one.
@@ -77,7 +99,7 @@ async def search_adresses(request: Request, searched: str):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/adresses/getone/{searched_adress}", tags=_bdd_tag+_adresses_tag)
+@router.get("/db/reader/adresses/getone/{searched_adress}", tags=_bdd_tag)
 async def search_adresses(request: Request, searched_adress: str):
     """
     Get all adresses similar to the searched one.
@@ -94,7 +116,7 @@ async def search_adresses(request: Request, searched_adress: str):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/adresses/cities", tags=_bdd_tag+_adresses_tag)
+@router.get("/db/reader/adresses/cities", tags=_bdd_tag)
 async def get_cities_names_and_codes(request: Request):
     """
     Get all cities names and codes from the database.
@@ -105,7 +127,7 @@ async def get_cities_names_and_codes(request: Request):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/adresses/{city_name}/allcoords", tags=_bdd_tag+_adresses_tag)
+@router.get("/db/reader/adresses/{city_name}/allcoords", tags=_bdd_tag)
 async def get_coord_by_city_name(request: Request, city_name: str):
     """
     Get longitudes, latitudes by city name.
@@ -118,7 +140,7 @@ async def get_coord_by_city_name(request: Request, city_name: str):
 #### logements
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/logements/getall", tags=_bdd_tag+_logements_tag)
+@router.get("/db/reader/logements/getall", tags=_bdd_tag)
 async def get_all_logements(request: Request):
     """
     Get all logements from the database
@@ -129,7 +151,7 @@ async def get_all_logements(request: Request):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/logements/getbyadress/{searched}", tags=_bdd_tag+_logements_tag)
+@router.get("/db/reader/logements/getbyadress/{searched}", tags=_bdd_tag)
 async def get_logements_by_adress(request: Request, searched: str):
     """
     Get all logements from the database by address (label_ademe).
@@ -141,7 +163,7 @@ async def get_logements_by_adress(request: Request, searched: str):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/logements/getonebycity/{city_name}", tags=_bdd_tag+_logements_tag)
+@router.get("/db/reader/logements/getonebycity/{city_name}", tags=_bdd_tag)
 async def get_one_logements_by_city_name(request: Request, city_name: str):
     """
     Get only one logement from the database by city name.
@@ -154,7 +176,7 @@ async def get_one_logements_by_city_name(request: Request, city_name: str):
 
 @my_exception_handler
 @validate_reader_handler
-@router.get("/db/reader/logements/getallbycity/{city_name}", tags=_bdd_tag+_logements_tag)
+@router.get("/db/reader/logements/getallbycity/{city_name}", tags=_bdd_tag)
 async def get_all_logements_by_city_name(request: Request, city_name: str):
     """
     Get all logements from the database by city name.
@@ -171,7 +193,7 @@ async def get_all_logements_by_city_name(request: Request, city_name: str):
 ## send schema of both tables logements and adresses -> schema for batch mode
 
 #### model
-@router.get("/model/{version}/config")
+@router.get("/model/{version}/config", tags=["config"])
 async def get_model_config(version):
     module = importlib.import_module(f"ressources.models.{version}.model_config")
     return module.model_config
