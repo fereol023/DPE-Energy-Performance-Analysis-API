@@ -56,36 +56,27 @@ services:
         retries: 3
         timeout: 5s
 
-  elasticsearch:
-    image: "elastic/elasticsearch:8.15.1"
-    container_name: dpe-elasticsearch
-    environment:
-      - node.name=elasticsearch
-      - xpack.security.enabled=false
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - ./storage/elk:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-
-  kibana:
-    image: "kibana:8.15.5"
-    container_name: dpe-kibana
-    depends_on:
-      - elasticsearch
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-
   prefect-server: 
     image: prefecthq/prefect:3-python3.12
     container_name: dpe-prefect-server
     ports:
       - "4200:4200"
+      - "4201:4201"   # API (optional)
+    entrypoint: ["prefect", "server", "start"]
+    command: ["--host", "0.0.0.0", "--port", "4200"]
+    environment:
+      PREFECT_API_URL: http://localhost:4200/api
+    restart: always
 
-
+  redis:
+    image: redis:7-alpine
+    container_name: dpe-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./storage/redis:/data
+      
 volumes:
     minio:
         driver: local

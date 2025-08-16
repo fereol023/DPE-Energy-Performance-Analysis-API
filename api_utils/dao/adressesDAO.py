@@ -14,6 +14,8 @@ class AdressesDAO:
         self.conn.autocommit = True
         self.cursor = self.conn.cursor()
         self.table_name = "adresses"
+        self.table_villes = "villes"
+        self.geocoding_table = "donnees_geocodage"
 
     def select_all(self) -> List[Dict]:
         """
@@ -80,7 +82,7 @@ class AdressesDAO:
             query = sql.SQL("""
                 SELECT DISTINCT city_ban, code_departement_enedis, code_postal_ban_ademe 
                 FROM {};
-                """).format(sql.Identifier(self.table_name))
+                """).format(sql.Identifier(self.table_villes))
             self.cursor.execute(query)
             res, excp = self.cursor.fetchall(), None
             res = [{"city_name": row[0], "code_departement": row[1], "code_postal": row[2]} for row in res] if res else []
@@ -100,19 +102,21 @@ class AdressesDAO:
         try:
             if city_name.lower() == "all":
                 query = sql.SQL("""
-                    SELECT DISTINCT a.city_ban, a.lon_ban, a.lat_ban, count(l._id_ademe) as nb_logements 
-                    FROM {} as a
-                    LEFT JOIN logements as l ON a.id_ban = l.id_ban
+                    SELECT DISTINCT v.city_ban, g.lon_ban, g.lat_ban, count(l._id_ademe) as nb_logements 
+                    FROM logements as l
+                    LEFT JOIN villes as v ON v.code_postal_ban_ademe = l.code_postal_ban_ademe
+                    LEFT JOIN donnees_geocodage as g ON g.id_ban = l.id_ban
                     GROUP BY city_ban, lon_ban, lat_ban;
-                    """).format(sql.Identifier(self.table_name))
+                    """)#.format(sql.Identifier(self.table_name))
             else:
                 query = sql.SQL("""
-                    SELECT DISTINCT a.city_ban, a.lon_ban, a.lat_ban, count(l._id_ademe) as nb_logements 
-                    FROM {} as a
-                    LEFT JOIN logements as l ON a.id_ban = l.id_ban
-                    WHERE LOWER(a.city_ban) = LOWER(%s)
+                    SELECT DISTINCT v.city_ban, g.lon_ban, g.lat_ban, count(l._id_ademe) as nb_logements 
+                    FROM logements as l
+                    LEFT JOIN villes as v ON l.code_postal_ban_ademe = v.code_postal_ban_ademe
+                    LEFT JOIN donnees_geocodage as g ON l.id_ban = g.id_ban
+                    WHERE LOWER(v.city_ban) = LOWER(%s)
                     GROUP BY city_ban, lon_ban, lat_ban;
-                    """).format(sql.Identifier(self.table_name))
+                    """)#.format(sql.Identifier(self.table_name))
             self.cursor.execute(query, [city_name])
             res, excp = self.cursor.fetchall(), None
             res = [{"Ville": row[0], "longitude": float(row[1]), "latitude": float(row[2]), "nombre_logements": float(row[3])} for row in res] if res else []

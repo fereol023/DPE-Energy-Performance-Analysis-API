@@ -18,7 +18,8 @@ def start_server(local):
     if local:
         print("=== Running in local mode ===".center(os.get_terminal_size().columns))
         from api_utils.fonctions import set_config_as_env_var as set_config
-        set_config(debug=True)
+        set_config(dirpath="config", filename="secrets.json", debug=True)
+        set_config(dirpath="config", filename="paths.json", debug=True)
     else:
         print("=== Running in no local mode ===".center(os.get_terminal_size().columns))
 

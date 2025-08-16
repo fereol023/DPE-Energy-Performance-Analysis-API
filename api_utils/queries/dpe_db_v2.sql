@@ -55,7 +55,7 @@ CREATE TABLE "donnees_climatiques" (
 
 
 
-CREATE TABLE "ville" (
+CREATE TABLE "villes" (
 	"code_postal_ban_ademe" VARCHAR(255) NOT NULL UNIQUE,
 	"city_ban" TEXT,
 	"code_departement_enedis" VARCHAR(255),
@@ -98,7 +98,7 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "donnees_climatiques"
 ADD FOREIGN KEY("id_ban") REFERENCES "logements"("id_ban")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE "ville"
+ALTER TABLE "villes"
 ADD FOREIGN KEY("code_postal_ban_ademe") REFERENCES "logements"("code_postal_ban_ademe")
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE "tests_statistiques_dpe"

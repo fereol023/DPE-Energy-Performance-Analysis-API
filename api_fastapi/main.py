@@ -1,17 +1,29 @@
 import os, logging, httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api_fastapi.routeurs import (
-    routeur_bdd, routeur_etl, routeur_s3, routeur_elk
+    routeur_bdd, routeur_etl, routeur_services
 )
 
 from api_utils.commons import get_env_variable
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+
+API_NAME = get_env_variable("API_NAME", default_value="DPE-ENEDIS-ADEME-API-SERVER", compulsory=True)
+API_DESCR = get_env_variable("API_DESCRIPTION", default_value="API backend for DPE Energy Performance Analysis")
+API_VERSION = get_env_variable("API_VERSION", default_value="1.0.0", compulsory=True) # TODO lire depuis le fichier VERSION a la racine
+
+logger = logging.getLogger(API_NAME)
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 
 def lifespan(_):
     print(f"➡️ Startup server".center(os.get_terminal_size().columns))
@@ -19,11 +31,10 @@ def lifespan(_):
     print("❌ Shutdown server".center(os.get_terminal_size().columns))
 
 app = FastAPI(
-    title = get_env_variable("APP_NAME", compulsory=True),
-    description = get_env_variable("APP_DESCRIPTION"),
-    version = get_env_variable("APP_VERSION", compulsory=True), # lire depuis le fichier VERSION a la racine
-    # lifespan = lifespan,
-    docs_url = "/docs", # /docs
+    title = API_NAME,
+    description = API_DESCR,
+    version = API_VERSION,
+    docs_url = "/docs",
 )
 
 origins, methods, headers = ["*"], ["*"], ["*"] 
@@ -35,9 +46,18 @@ app.add_middleware(
     allow_headers = headers
 )
 
+limiter = Limiter( # rate limiter instance
+    key_func=get_remote_address, 
+    storage_uri=f"redis://{os.getenv("REDIS_HOST"):{os.getenv("REDIS_PORT")}}"
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
 @app.get("/", tags=["ping 🙋‍♂️"])
 async def start():
-    logging.info("Server started !")
+    logger.info("Server started !")
     return {
         "message": "Ping hello from server !",
         "app-name": get_env_variable("APP_NAME"),
@@ -47,9 +67,7 @@ async def start():
 
 @app.get("/health", tags=["health check"])
 async def health_check():
-    """
-    Health check endpoint to verify if the server is running.
-    """
+    """Health check endpoint to verify if the server is running."""
     return {"status": "ok", "message": "Server is running!"}
 
 
@@ -59,9 +77,7 @@ async def get_kwh_price():
     Endpoint to get the price of kWh in euros.
     This call another public api to get the current price.
     """
-
     URL_PRICING_KWH, prix_bckp = "https://open-dpe.fr/api/v1/electricity.php?tarif=EDF_bleu", 0.200
-
     metadata_tarif = {
         'source': URL_PRICING_KWH,
         'description': 'Tarif EDF reglementé - fixé par les pouvoirs publics.',
@@ -72,7 +88,6 @@ async def get_kwh_price():
         'prix_hc': 'NC',
         'prix_hp': 'NC'
     }
-
     try:
         query_pricing = httpx.get(URL_PRICING_KWH, timeout=30) # 30s timeout
         query_pricing.raise_for_status()  # raise an error for bad responses
@@ -89,7 +104,13 @@ async def get_kwh_price():
     finally:
         return metadata_tarif
 
+@app.get("/adresses-strict", tags=['database'])
+@limiter.limit("5/minute") 
+async def limited_endpoint(request: Request):
+    """up to 5 requests per minute per IP"""
+    return {"message": "You can call this endpoint up to 5 times per minute."}
+
+app.include_router(routeur_bdd.auth_router)
 app.include_router(routeur_bdd.router)
 app.include_router(routeur_etl.router)
-app.include_router(routeur_s3.router)
-app.include_router(routeur_elk.router)
+app.include_router(routeur_services.router)
