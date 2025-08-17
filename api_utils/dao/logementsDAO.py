@@ -42,7 +42,7 @@ class LogementsDAO:
         try:
             query = sql.SQL("""
                 SELECT l.* FROM {} as l
-                LEFT JOIN adresses AS a on l._id_ademe = a._id_ademe
+                LEFT JOIN adresses AS a on l.id_ban = a.id_ban
                 WHERE LOWER(a.label_ban) LIKE LOWER(%s);
             """).format(sql.Identifier(self.table_name))
             self.cursor.execute(query, [f"%{searched}%"])
@@ -66,16 +66,16 @@ class LogementsDAO:
             if nrows > 0:
                 query = sql.SQL("""
                     SELECT l.* FROM {} AS l
-                    LEFT JOIN adresses AS a ON l.id_ban = a.id_ban
-                    WHERE LOWER(a.city_ban) LIKE LOWER(%s)
+                    LEFT JOIN villes AS v ON l.code_postal_ban_ademe = v.code_postal_ban_ademe
+                    WHERE LOWER(v.city_ban) LIKE LOWER(%s)
                     LIMIT %s;
                 """).format(sql.Identifier(self.table_name))
                 self.cursor.execute(query, [f"%{city_name}%", nrows])
             else:
                 query = sql.SQL("""
                     SELECT l.* FROM {} AS l
-                    LEFT JOIN adresses AS a ON l.id_ban = a.id_ban
-                    WHERE LOWER(a.city_ban) LIKE LOWER(%s);
+                    LEFT JOIN villes AS v ON l.code_postal_ban_ademe = v.code_postal_ban_ademe
+                    WHERE LOWER(v.city_ban) LIKE LOWER(%s);
                 """).format(sql.Identifier(self.table_name))
                 self.cursor.execute(query, [f"%{city_name}%"])
             res, excp = self.cursor.fetchall(), None

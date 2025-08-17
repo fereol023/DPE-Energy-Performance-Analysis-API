@@ -1,9 +1,16 @@
-import numpy as np, pandas as pd
+import numpy as np
+import pandas as pd
 from functools import lru_cache
 from unidecode import unidecode
 from datetime import datetime
 
-import re, pickle, os, json, yaml, logging
+import os
+import re
+import json
+import yaml
+import pickle
+import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -58,7 +65,6 @@ def normalize_df_colnames(df):
     return sort_colnames(df.rename(columns={c: normalize_name(unidecode(c)).lower() for c in df.columns}))
 
 
-
 def get_today_date():
     return datetime.today().strftime('%Y_%m_%d')
 
@@ -84,17 +90,23 @@ def load_yaml_config(fpath):
     return load_yaml(fpath, default_value={})
 
 
-def set_config_as_env_var(dirpath='config/', debug=False):
+def set_config_as_env_var(dirpath='config/', filename=None, debug=False):
     """if value is dict use eval(dict) to return to it to dicrt instead of str"""
     if os.getenv('ENV') == None: # si vrai les variables d'env sont probablement definies déja (mode nolocal)
         try:
             config = {}
-            for f in os.listdir(dirpath):
-                if f.endswith('.yaml'):
-                    config.update(load_yaml_config(os.path.join(dirpath, f)))
-                if f.endswith('.json'):
-                    config.update(load_json_config(os.path.join(dirpath, f)))
-            appname, env = config.get('app-name'), config.get('ENV')
+            if filename is None:
+                for filename in os.listdir(dirpath):
+                    if filename.endswith('.yaml'):
+                        config.update(load_yaml_config(os.path.join(dirpath, f)))
+                    if filename.endswith('.json'):
+                        config.update(load_json_config(os.path.join(dirpath, f)))
+            else:
+                if filename.endswith('.yaml'):
+                    config.update(load_yaml_config(os.path.join(dirpath, filename)))
+                if filename.endswith('.json'):
+                    config.update(load_json_config(os.path.join(dirpath, filename)))
+            appname, env = config.get('API-NAME'), config.get('ENV')
             assert env in ['LOCAL', 'NOLOCAL'], f"Config error : ENV ({env}) is not valid. Choose between ['LOCAL', 'NOLOCAL']"
             logging.info(f"Application {appname} is running on env {env}")
             for key, value in config.items():
@@ -103,3 +115,5 @@ def set_config_as_env_var(dirpath='config/', debug=False):
                 os.environ[key] = str(value)
         except Exception as e:
             print(f"Excetion while setting config : {e}")
+    else:
+        print("Config already set")
