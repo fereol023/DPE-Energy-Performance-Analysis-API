@@ -1,7 +1,7 @@
 services:
 
   api:
-    image: fereol023/dpe-energy-performance-analysis-api:<tag>  
+    image: fereol023/dpe-energy-performance-analysis-api:v0.6.0.1755437551  
     container_name: dpe-fastapi
     ports:
       - "8000:8000"
