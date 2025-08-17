@@ -21,7 +21,7 @@ def start_server(local):
         set_config(dirpath="config", filename="secrets.json", debug=True)
         set_config(dirpath="config", filename="paths.json", debug=True)
     else:
-        print("=== Running in no local mode ===".center(os.get_terminal_size().columns))
+        print("=== Running in no local mode ===")
 
     from api_utils.commons import get_env_variable
     uvicorn.run(
