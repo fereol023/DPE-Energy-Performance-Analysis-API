@@ -3,6 +3,7 @@ fastapi==0.116.1
 httpx==0.28.1
 numpy==2.3.2
 pandas==2.3.1
+pathlib==1.0.1
 psycopg2_binary==2.9.10
 pydantic==2.11.7
 PyJWT==2.10.1
@@ -11,3 +12,4 @@ PyYAML==6.0.2
 slowapi==0.1.9
 Unidecode==1.4.0
 uvicorn==0.35.0
+-r etl_engine/requirements.txt
