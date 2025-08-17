@@ -1,23 +1,50 @@
 services:
 
-  # api:
-  #   build: DPE-Energy-Performance-Analysis-API/.
-  #   image: dpe-api:latest  # nom explicite de l'image de l'api # actualiser avec le dernier tag du repos de l'api # recup le nom sur 
-  #   container_name: fastapi
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - mongo
-  #   environment:
-  #     ENVIRONMENT: PROD
-  #     DB_HOST: mongo
-  #     DB_PORT: 27017 # dans le reseau la db est sur ce port 
-  #     DB_USER: dpeapi
-  #     DB_PWD: pwddpeapi
-  #   networks:
-  #     - dpe-network
-  #   links:
-  #     - mongo
+  api:
+    image: fereol023/fereol023/dpe-energy-performance-analysis-api:<tag>  
+    container_name: dpe-fastapi
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - minio
+      - redis
+      - prefect-server
+    environment:
+      ENV: NOLOCAL
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SMTP_SERVER: "smtp.gmail.com"
+      SMTP_PORT: "465"
+      SMTP_USERNAME: xxxxxxx
+      SMTP_PASSWORD: xxxxxxx
+      ADMIN_EMAIL: xxxxxxx
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB_NAME: dpedb_v2
+      POSTGRES_ADMIN_USERNAME: postgres
+      POSTGRES_ADMIN_PASSWORD: xxxxxx
+      POSTGRES_READER_USERNAME: reader
+      POSTGRES_READER_PASSWORD: xxxxxx
+      POSTGRES_WRITER_USERNAME: writer
+      POSTGRES_WRITER_PASSWORD: xxxxxx
+      S3_ACCESS_KEY: xxxxxx
+      S3_SECRET_KEY: xxxxxx
+      S3_BUCKET_NAME: dpe-storage-v1
+      S3_REGION: eu-west
+      S3_ENDPOINT_URL: http://minio:9000
+      PREFECT_API_URL: http://prefect-server:4200/api
+      PATH_LOG_DIR: etl/logs/
+      PATH_ARCHIVE_DIR: etl/data/archive/
+      PATH_DATA_BRONZE: etl/data/1_bronze/
+      PATH_DATA_SILVER: etl/data/2_silver/
+      PATH_DATA_GOLD: etl/data/3_gold/
+      PATH_FILE_INPUT_ENEDIS_CSV: etl/data/1_bronze/conso_enedis.csv
+      SCHEMA_ETL_INPUT_FILEPATH: config/schema_input_data.json
+      SCHEMA_SILVER_DATA_FILEPATH: etl/ressources/schemas/schema_silver_data.json
+      SCHEMA_GOLDEN_DATA_FILEPATH: config/schema_golden_data.json
 
   db:
     image: postgres
@@ -31,7 +58,7 @@ services:
       - ./storage/postgres:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password # ${POSTGRES_PASSWORD} to set into .env file (root)
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: dpedb
 
   minio:
@@ -45,7 +72,7 @@ services:
         - ./storage/minio:/data/minio
     environment:
         MINIO_ROOT_USER: minio
-        MINIO_ROOT_PASSWORD: password
+        MINIO_ROOT_PASSWORD: xxxxxx
     command: 'minio server /data/minio --console-address ":8900"'
     healthcheck:
         test:
@@ -61,7 +88,7 @@ services:
     container_name: dpe-prefect-server
     ports:
       - "4200:4200"
-      - "4201:4201"   # API (optional)
+      - "4201:4201" 
     entrypoint: ["prefect", "server", "start"]
     command: ["--host", "0.0.0.0", "--port", "4200"]
     environment:
