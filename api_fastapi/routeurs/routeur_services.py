@@ -1,10 +1,17 @@
-from fastapi import APIRouter, HTTPException, UploadFile
-from fastapi.responses import RedirectResponse
-from api_utils.commons import get_env_variable
-
+import os
+import io
+import time
+import httpx
+import asyncio
 from minio import Minio
 from minio.error import S3Error
-import os, io, asyncio
+
+from fastapi.responses import RedirectResponse
+from api_utils.commons import get_env_variable
+from fastapi import APIRouter, HTTPException, UploadFile
+from api_fastapi.exceptions import my_exception_handler 
+
+
 
 router = APIRouter(tags=['micro-services'])
 
@@ -32,15 +39,31 @@ def get_s3_client():
 #     except:
 #         raise HTTPException(status_code=500, detail="kibana dashboard is ko")
 
+@my_exception_handler
 @router.get("/prefect/ping")
 async def redirect_prefect_server():
-    return 
+    try:
+        p = get_env_variable('PREFECT_API_URL')
+        s = time.time()
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(p)
+        f = round((time.time()-s) * 1_000, 2) # en ms
+        return {
+            "url": p,
+            "status_code": response.status_code,
+            "elapsed": f"{f} ms",
+            "ok": response.status_code == 200
+        }
+    except Exception as e:
+        raise Exception(f"Exception with url {p} : {str(e)}")
 
+@my_exception_handler
 @router.get("/prefect-server/dashboard")
 async def redirect_prefect_server():
-    return 
+    p = get_env_variable('PREFECT_API_URL').replace("api", "")
+    return RedirectResponse(p)
 
-
+@my_exception_handler
 @router.get("/s3/ping")
 async def ping_minio():
     try:
@@ -57,7 +80,7 @@ async def ping_minio():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
-
+@my_exception_handler
 @router.post("/s3/upload-file")
 async def upload_csv(file: UploadFile):
     # validate file type

@@ -46,6 +46,7 @@ model_config = {
     'etiquette_ges_ademe': {
         'min': 1,
         'max': 7,
+        'def': 5,
         'dtype': 'int32',
         'mapping': {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'NA': -1},
         'desc': 'Etiquette GES'
@@ -53,6 +54,7 @@ model_config = {
     'etiquette_dpe_ademe': {
         'min': 1,
         'max': 7,
+        'def': 3,
         'dtype': 'int32',
         'mapping': {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'NA': -1},
         'desc': 'Etiquette DPE'

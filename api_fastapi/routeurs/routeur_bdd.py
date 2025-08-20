@@ -1,32 +1,20 @@
 import os
-import importlib
-from fastapi.responses import JSONResponse
-from fastapi import APIRouter, Request, Depends, HTTPException
-
-from api_fastapi.exceptions import (
-    my_exception_handler, 
-    validate_reader_handler
-)
-from api_fastapi import (
-    create_reader_jwt_token, 
-    validate_reader_identity_simple,
-    validate_reader_identity
-)
-from api_utils.controller import dbC, adressesC, logementsC
-
+import redis
 import secrets
 import smtplib
-import redis
-from email.mime.text import MIMEText
-from datetime import datetime, timedelta
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Response
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel, EmailStr
-from typing import Optional
-
+import importlib
 import pandas as pd
 from typing import List
+from email.mime.text import MIMEText
+from datetime import datetime, timedelta
+from pydantic import BaseModel, EmailStr
+
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import status, Response, APIRouter, Request, Depends, HTTPException
+
 from api_utils.fonctions import load_pickle
+from api_fastapi.exceptions import my_exception_handler 
+from api_utils.controller import dbC, adressesC, logementsC
 from ressources.models.v1.model_config import InputModel as InputModelv1
 
 
