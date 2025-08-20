@@ -1,7 +1,7 @@
 services:
 
   api:
-    image: fereol023/dpe-energy-performance-analysis-api:v0.6.0.1755437551  
+    image: fereol023/dpe-energy-performance-analysis-api:<tag>
     container_name: dpe-fastapi
     ports:
       - "8000:8000"
@@ -18,9 +18,9 @@ services:
       REDIS_PORT: "6379"
       SMTP_SERVER: "smtp.gmail.com"
       SMTP_PORT: "465"
-      SMTP_USERNAME: xxxxxx
-      SMTP_PASSWORD: xxxxxx
-      ADMIN_EMAIL: xxxxxx
+      SMTP_USERNAME: xxxxxxxxxx
+      SMTP_PASSWORD: xxxxxxxxxx
+      ADMIN_EMAIL: xxxxxxxxxx
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POSTGRES_DB_NAME: dpedb_v2
@@ -30,8 +30,8 @@ services:
       POSTGRES_READER_PASSWORD: password
       POSTGRES_WRITER_USERNAME: writer
       POSTGRES_WRITER_PASSWORD: password
-      S3_ACCESS_KEY: xxxxxx
-      S3_SECRET_KEY: xxxxxx
+      S3_ACCESS_KEY: xxxxxxxxxx
+      S3_SECRET_KEY: xxxxxxxxxx
       S3_BUCKET_NAME: dpe-storage-v1
       S3_REGION: eu-west
       S3_ENDPOINT_URL: http://minio:9000

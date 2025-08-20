@@ -1,4 +1,4 @@
-import os, asyncio
+import os, asyncio, subprocess
 from fastapi import APIRouter, HTTPException
 
 # import engine_test
@@ -33,3 +33,17 @@ async def execute_ETL(annee: int = 2023, code_departement: int = 95, batch_size_
         return {"message": "Flow executed successfully - next check database !"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error while running flow : {e}")
+    
+
+@router.get("/etl/start-deployment")
+async def start_etl():
+    try:
+        _path = os.path.join("etl_engine", "src", "dpe_enedis_ademe_etl_engine", "pipelines", "etl_app.py")
+        subprocess.Popen(
+            ["python", _path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return {"status": "ok"}
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"Error : {e.stderr}")

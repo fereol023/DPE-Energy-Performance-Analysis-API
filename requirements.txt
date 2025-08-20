@@ -13,6 +13,7 @@ python-multipart
 PyYAML==6.0.2
 redis==6.2.0
 slowapi==0.1.9
+scikit-learn==1.6.1
 Unidecode==1.4.0
 uvicorn==0.35.0
 -r etl_engine/requirements.txt
