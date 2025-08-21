@@ -3,7 +3,9 @@ FROM python:3.12 AS builder
 
 # outils nécessaires pour compiler les paquets depuis la dist. source source
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    build-essential python3-dev gcc g++ gfortran \
+    libssl-dev libffi-dev libpq-dev libblas-dev liblapack-dev \
+    make cmake \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install uv
