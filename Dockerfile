@@ -1,5 +1,5 @@
 # builder les wheels
-FROM python:3.12-slim AS builder
+FROM python:3.12 AS builder
 
 # outils nécessaires pour compiler les paquets depuis la dist. source source
 RUN apt-get update && apt-get install -y \
