@@ -8,7 +8,7 @@ ressources/data/
 **/*.pyc
 **/*.pyo
 **/*.pyd
-
+z**
 # Ignore les environnements virtuels
 venv/
 env/

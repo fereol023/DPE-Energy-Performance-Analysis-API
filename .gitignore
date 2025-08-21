@@ -7,7 +7,7 @@ ressources/data/
 */*/__pycache__/
 *.py[cod]
 *$py.class
-
+z**
 # C extensions
 *.so
 **DS_Store
