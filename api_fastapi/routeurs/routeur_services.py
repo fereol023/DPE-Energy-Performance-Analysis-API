@@ -60,7 +60,7 @@ async def redirect_prefect_server():
 @my_exception_handler
 @router.get("/prefect-server/dashboard")
 async def redirect_prefect_server():
-    p = get_env_variable('PREFECT_API_URL').replace("api", "")
+    p = get_env_variable('PREFECT_UI_URL')
     return RedirectResponse(p)
 
 @my_exception_handler
