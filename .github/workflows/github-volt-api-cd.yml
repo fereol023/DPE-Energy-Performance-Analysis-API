@@ -28,7 +28,7 @@ jobs:
 
   call-docker-build-and-push-workflow:
     needs: fetch-new-tag
-    uses: fereol023/pipelines_templates/.github/workflows/github-docker-build-and-push.yml@main
+    uses: fereol023/pipelines_templates/.github/workflows/github-docker-build-and-push-no-arm64.yml@main
     with:
       GIT_TAG: ${{ needs.fetch-new-tag.outputs.new_tag }}
       hasSubmodules: true
