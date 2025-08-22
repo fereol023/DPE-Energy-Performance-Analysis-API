@@ -4,6 +4,8 @@ Git module API server pour DPE-Energy-Performance-Analysis.
 
 [![.github/workflows/github-volt-api-cd.yml](https://github.com/fereol023/DPE-Energy-Performance-Analysis-API/actions/workflows/github-volt-api-cd.yml/badge.svg?branch=main)](https://github.com/fereol023/DPE-Energy-Performance-Analysis-API/actions/workflows/github-volt-api-cd.yml)
 
+[![.github/workflows/github-volt-api-ci.yml](https://github.com/fereol023/DPE-Energy-Performance-Analysis-API/actions/workflows/github-volt-api-ci.yml/badge.svg?branch=main)](https://github.com/fereol023/DPE-Energy-Performance-Analysis-API/actions/workflows/github-volt-api-ci.yml)
+
 ## 📑 Sommaire
 1. [Description du projet](#description-du-projet)  
 2. [Architecture et sécurité](#architecture-et-sécurité) 
