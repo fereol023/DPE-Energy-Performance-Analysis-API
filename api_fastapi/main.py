@@ -1,6 +1,12 @@
-import os, logging, httpx
+import os
+import httpx
+import logging
+import asyncio
+import threading
 from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from prefect.workers.process import ProcessWorker
 
 from api_fastapi.routeurs import (
     routeur_bdd, routeur_etl, routeur_services
@@ -20,21 +26,43 @@ API_VERSION = get_env_variable("API_VERSION", default_value="1.0.0", compulsory=
 logger = logging.getLogger(API_NAME)
 logger.setLevel(logging.INFO)
 console_handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-def lifespan(_):
-    print(f"➡️ Startup server".center(os.get_terminal_size().columns))
-    yield
-    print("❌ Shutdown server".center(os.get_terminal_size().columns))
+# ceci permet de démarrer un agent prefect dans le conteneur pour exécuter les déploiements
+worker_thread: threading.Thread | None = None
+
+def run_worker():
+    """Fonction pour lancer le worker dans un thread séparé."""
+    async def main():
+        worker = ProcessWorker(work_pool_name="dpe-api-prefect-agent")
+        await worker.start()
+    asyncio.run(main())
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # global worker
+    #worker = ProcessWorker(work_pool_name="dpe-api-prefect-agent")
+    #await worker.start()
+    global worker_thread
+    # Démarrer le thread du worker
+    worker_thread = threading.Thread(target=run_worker, daemon=True)
+    worker_thread.start()
+    logger.info("✅ Prefect worker started")
+    try: 
+        yield
+    finally:
+        print("shut down worker agent")
+
 
 app = FastAPI(
     title = API_NAME,
     description = API_DESCR,
     version = API_VERSION,
     docs_url = "/docs",
+    lifespan=lifespan
 )
 
 origins, methods, headers = ["*"], ["*"], ["*"] 
