@@ -1,12 +1,17 @@
 import os
+import yappi
 import httpx
 import logging
 import asyncio
 import threading
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from prefect.workers.process import ProcessWorker
+
+from prometheus_client import (
+    start_http_server, Gauge, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
+)
 
 from api_fastapi.routeurs import (
     routeur_bdd, routeur_etl, routeur_services
@@ -25,11 +30,21 @@ API_VERSION = get_env_variable("API_VERSION", default_value="1.0.0", compulsory=
 
 logger = logging.getLogger(API_NAME)
 logger.setLevel(logging.INFO)
-console_handler = logging.StreamHandler()
 formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
 
+# prometheus gauges
+# CPU gauge
+yappi_gauge = Gauge(
+    "yappi_function_cpu_seconds",
+    "CPU time per Python function",
+    ["module", "function"]
+)
+# Gauge for function call count
+yappi_ncalls = Gauge(
+    "yappi_function_ncalls",
+    "Number of calls per Python function",
+    ["module", "function"]
+)
 
 # ceci permet de démarrer un agent prefect dans le conteneur pour exécuter les déploiements
 worker_thread: threading.Thread | None = None
@@ -83,7 +98,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-@app.get("/", tags=["ping 🙋‍♂️"])
+@app.get("/", tags=["🙋‍♂️ health check"])
 async def start():
     logger.info("Server started !")
     return {
@@ -93,10 +108,49 @@ async def start():
         "env": get_env_variable("ENV")
     }
 
-@app.get("/health", tags=["health check"])
+@app.get("/health", tags=["🙋‍♂️ health check"])
 async def health_check():
     """Health check endpoint to verify if the server is running."""
     return {"status": "ok", "message": "Server is running!"}
+
+
+@app.get("/profiling", tags=["🙋‍♂️ health check"])
+async def get_profile():
+    from pathlib import Path
+    # Current project folder
+    project_root = Path(__file__).parent.parent.resolve()
+    # logger.info(f"yappi will show profiling related to : {project_root}")
+    yappi.stop()
+    stats = yappi.get_func_stats()
+    # Filter functions whose source files are inside the project folder
+    filtered_stats = [
+        func for func in stats
+        if func.full_name and Path(func.full_name).resolve().is_relative_to(project_root)
+        and ("Library" not in Path(func.full_name).parts) 
+        and (".venv" not in Path(func.full_name).parts)
+        and ("<" not in func.module)
+        and ("<" not in func.name)
+    ]
+    # read stats 
+    # result = []
+    # for func in filtered_stats:
+    #     result.append({
+    #         "name": func.name,
+    #         "module": func.module,
+    #         "ncall": func.ncall,
+    #         "ttot": func.ttot,  # total time
+    #         "tsub": func.tsub   # time spent in subfunctions
+    #     })
+    # return result
+
+    # update prometheus metrics
+    logger.info(f"Collected ({len(filtered_stats)}) metrics")
+    for func in filtered_stats:
+        yappi_gauge.labels(module=func.module, function=func.name).set(func.ttot)
+        yappi_ncalls.labels(module=func.module, function=func.name).set(func.ncall)
+    yappi.clear_stats()
+    yappi.start(builtins=False, profile_threads=True)  # restart for next collection
+    return Response(generate_latest(REGISTRY), 200, media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/price_kwh", tags=["price"])

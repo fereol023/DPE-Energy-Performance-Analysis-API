@@ -1,4 +1,4 @@
-import click, uvicorn, os, sys
+import click, uvicorn, os, sys, yappi
 
 # ajouter le module engine pour qu'il soit 
 # importé par le routeur qui exec le flow
@@ -15,6 +15,8 @@ def start_server(local):
     local: python main.py --local
     nolocal (image): python main.py 
     """
+    # le profiler de fonctions 
+    yappi.start(builtins=False, profile_threads=True)
     if local:
         print("=== Running in local mode ===".center(os.get_terminal_size().columns))
         from api_utils.fonctions import set_config_as_env_var as set_config
