@@ -45,6 +45,24 @@ def require_role(required_role: list[str]):
         return user
     return role_checker
 
+def save_user_mail(email: str):
+    """save user mail to txt file"""
+    try:
+        import pathlib, os
+        root_dir = pathlib.Path(__file__).parent.parent.parent.resolve()
+        file_path = os.path.join(root_dir, "users.txt")
+        # append if not exists
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                users = f.read().splitlines()
+            if email in users:
+                return
+        with open(file_path, "a") as f:
+            f.write(email + "\n")
+    except Exception as e:
+        print(f"Error saving user mail: {e}")
+        pass
+    
 router = APIRouter(
     prefix="",
     tags=['database'],
@@ -61,6 +79,7 @@ def send_otp(request: OTPRequest):
     """
     Génère un OTP, le stocke dans Redis avec TTL, et l'envoie par email.
     """
+    save_user_mail(request.email)
     otp = str(secrets.randbelow(100000)).zfill(5)
     redis_client.setex(f"otp:{request.email}", 300, otp)  # TTL: 5 min
 
