@@ -3,6 +3,7 @@ storage/
 config/secrets.json
 ressources/data/
 **DS_Store
+users.txt
 # Ignore tous les dossiers __pycache__ et les fichiers compilés Python
 **/__pycache__/
 **/*.pyc

@@ -2,7 +2,9 @@ etl/
 storage/
 config/secrets.json
 ressources/data/
-# Byte-compiled / optimized / DLL files
+users.txt
+# Byte-compiled / optim
+ized / DLL files
 */__pycache__/
 */*/__pycache__/
 *.py[cod]
