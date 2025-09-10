@@ -1,6 +1,7 @@
 import os
 import yappi
 import httpx
+import psutil
 import logging
 import asyncio
 import threading
@@ -10,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from prefect.workers.process import ProcessWorker
 
 from prometheus_client import (
-    start_http_server, Gauge, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
+    start_http_server, Gauge, Counter, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
 )
 
 from api_fastapi.routeurs import (
@@ -33,18 +34,12 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
 
 # prometheus gauges
-# CPU gauge
-yappi_gauge = Gauge(
-    "yappi_function_cpu_seconds",
-    "CPU time per Python function",
-    ["module", "function"]
-)
-# Gauge for function call count
-yappi_ncalls = Gauge(
-    "yappi_function_ncalls",
-    "Number of calls per Python function",
-    ["module", "function"]
-)
+YAPPI_GAUGE = Gauge("yappi_function_cpu_seconds", "CPU time per Python function", ["module", "function"]) # CPU gauge
+YAPPI_NCALLS = Gauge("yappi_function_ncalls", "Number of calls per Python function", ["module", "function"]) # Gauge for function call count
+CPU_USAGE = Gauge("api_cpu_usage_percent", "CPU usage percentage") # cpu usage 
+MEMORY_USAGE = Gauge("api_memory_usage_percent", "Memory usage percentage") # RAM usage
+REQUEST_COUNT = Counter("api_requests_total", "Total HTTP requests") # requests counter
+
 
 # ceci permet de démarrer un agent prefect dans le conteneur pour exécuter les déploiements
 worker_thread: threading.Thread | None = None
@@ -80,6 +75,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# middleware CORS : allow all origins for simplicity
 origins, methods, headers = ["*"], ["*"], ["*"] 
 app.add_middleware(
     CORSMiddleware,
@@ -89,6 +85,7 @@ app.add_middleware(
     allow_headers = headers
 )
 
+# rate limiter configuration
 limiter = Limiter( # rate limiter instance
     key_func=get_remote_address, 
     storage_uri=f"redis://{os.getenv("REDIS_HOST"):{os.getenv("REDIS_PORT")}}"
@@ -96,6 +93,13 @@ limiter = Limiter( # rate limiter instance
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# another middleware to count requests
+@app.middleware("http")
+async def count_requests(request, call_next):
+    REQUEST_COUNT.inc()
+    response = await call_next(request)
+    return response
 
 
 @app.get("/", tags=["🙋‍♂️ health check"])
@@ -113,9 +117,17 @@ async def health_check():
     """Health check endpoint to verify if the server is running."""
     return {"status": "ok", "message": "Server is running!"}
 
+@app.get("/metrics")
+def metrics():
+    # 🔎 Récupérer les stats système
+    CPU_USAGE.set(psutil.cpu_percent(interval=0.1))
+    MEMORY_USAGE.set(psutil.virtual_memory().percent)
+
+    # Générer la sortie Prometheus
+    return Response(generate_latest(), 200, media_type=CONTENT_TYPE_LATEST)
 
 @app.get("/profiling", tags=["🙋‍♂️ health check"])
-async def get_profile():
+async def get_profile_yappi():
     from pathlib import Path
     # Current project folder
     project_root = Path(__file__).parent.parent.resolve()
@@ -146,10 +158,10 @@ async def get_profile():
     # update prometheus metrics
     logger.info(f"Collected ({len(filtered_stats)}) metrics")
     for func in filtered_stats:
-        yappi_gauge.labels(module=func.module, function=func.name).set(func.ttot)
-        yappi_ncalls.labels(module=func.module, function=func.name).set(func.ncall)
+        YAPPI_GAUGE.labels(module=func.module, function=func.name).set(func.ttot)
+        YAPPI_NCALLS.labels(module=func.module, function=func.name).set(func.ncall)
     yappi.clear_stats()
-    yappi.start(builtins=False, profile_threads=True)  # restart for next collection
+    yappi.start(builtins=False, profile_threads=True)  # restart yappi for next collection
     return Response(generate_latest(REGISTRY), 200, media_type=CONTENT_TYPE_LATEST)
 
 
