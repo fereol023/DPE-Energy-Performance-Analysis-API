@@ -40,4 +40,4 @@ jobs:
     needs: fetch-new-tag
     uses: fereol023/DPE-Energy-Performance-Analysis-ETL/.github/workflows/github-volt-api-img-build-and-deploy.yml@main
     with:
-      tag: ${{ needs.fetch-new-tag.outputs.new_tag }}
+      api-tag: ${{ needs.fetch-new-tag.outputs.new_tag }}
