@@ -2,9 +2,9 @@ name: ghaction-cd-volt-ai-api
 run-name: CD${{ github.run_number }}-${{ github.event.repository.name }}-${{ github.workflow }}_${{ github.ref_name }}
 on:
   # faut que 'final' soit dans le merge commit pour faire une nouvelle version mineure
-  # pull_request:
-  #   branches:
-  #     - main
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -48,8 +48,6 @@ jobs:
           ref: main
           github_token: ${{ secrets.GITHUB_TOKEN }}
           inputs: |
-            GIT_TAG: ${{ needs.fetch-new-tag.outputs.new_tag }}
+            {"GIT_TAG":"${{ needs.fetch-new-tag.outputs.new_tag }}"}
           secrets: |
-            CR_USER: ${{ secrets.CR_USER }}
-            CR_PWD: ${{ secrets.CR_PWD }}
-          
+            {"CR_USER":"${{ secrets.CR_USER }}","CR_PWD":"${{ secrets.CR_PWD }}"}
