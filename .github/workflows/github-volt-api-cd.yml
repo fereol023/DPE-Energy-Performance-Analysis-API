@@ -40,14 +40,5 @@ jobs:
     needs: fetch-new-tag
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger workflow in DPE-Energy-Performance-Analysis-ETL repo
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          repository: fereol023/DPE-Energy-Performance-Analysis-ETL
-          workflow: github-volt-api-img-build-and-deploy.yml
-          ref: main
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          inputs: |
-            {"GIT_TAG":"${{ needs.fetch-new-tag.outputs.new_tag }}"}
-          secrets: |
-            {"CR_USER":"${{ secrets.CR_USER }}","CR_PWD":"${{ secrets.CR_PWD }}"}
+      - name: Trigger workflow in the other DPE-Energy-Performance-Analysis-ETL repo
+        uses: fereol023/DPE-Energy-Performance-Analysis-ETL/.github/workflows/github-volt-api-img-build-and-deploy.yml@main
