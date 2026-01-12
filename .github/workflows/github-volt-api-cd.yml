@@ -36,10 +36,8 @@ jobs:
   #     CR_USER: ${{ secrets.CR_USER }}
   #     CR_PWD: ${{ secrets.CR_PWD }}
   
-  trigger-build-from-etl-repos:
+  trigger-image-build-from-etl-repository:
     needs: fetch-new-tag
     runs-on: ubuntu-latest
-    steps:
-      - name: Trigger workflow in the other DPE-Energy-Performance-Analysis-ETL repo
-        uses: fereol023/DPE-Energy-Performance-Analysis-ETL/.github/workflows/github-volt-api-img-build-and-deploy.yml@main
-        
+    uses: fereol023/DPE-Energy-Performance-Analysis-ETL/.github/workflows/github-volt-api-img-build-and-deploy.yml@main
+    
