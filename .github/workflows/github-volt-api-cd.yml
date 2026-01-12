@@ -38,6 +38,14 @@ jobs:
   
   trigger-image-build-from-etl-repository:
     needs: fetch-new-tag
-    uses: fereol023/DPE-Energy-Performance-Analysis-ETL/.github/workflows/github-volt-api-img-build-and-deploy.yml@main
-    with:
-      api-tag: ${{ needs.fetch-new-tag.outputs.new_tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: trigger workflow in etl repository to build and push docker image
+        env:
+          GH_TOKEN: ${{ secrets.GHA_PAT }}
+        run: |
+          gh workflow run github-volt-api-img-build-and-deploy.yml \
+            --repo fereol023/DPE-Energy-Performance-Analysis-ETL \
+            --ref main \
+            -f api_tag="${{ needs.fetch-new-tag.outputs.new-tag }}" 
+        # passed the tag here with the varname expected in inputs of the called workflow
