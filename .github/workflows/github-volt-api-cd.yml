@@ -26,12 +26,30 @@ jobs:
           echo "New tag created: ${{ needs.call-github-new-tagging-workflow.outputs.new_tag_created }}"
           echo "new_tag=${{ needs.call-github-new-tagging-workflow.outputs.new_tag_created }}" >> $GITHUB_OUTPUT
 
-  call-docker-build-and-push-workflow:
+  # call-docker-build-and-push-workflow:
+  #   needs: fetch-new-tag
+  #   uses: fereol023/pipelines_templates/.github/workflows/github-docker-build-and-push.yml@main
+  #   with:
+  #     GIT_TAG: ${{ needs.fetch-new-tag.outputs.new_tag }}
+  #     hasSubmodules: false
+  #   secrets:
+  #     CR_USER: ${{ secrets.CR_USER }}
+  #     CR_PWD: ${{ secrets.CR_PWD }}
+  
+  trigger-build-from-etl-repos:
     needs: fetch-new-tag
-    uses: fereol023/pipelines_templates/.github/workflows/github-docker-build-and-push.yml@main
-    with:
-      GIT_TAG: ${{ needs.fetch-new-tag.outputs.new_tag }}
-      hasSubmodules: true
-    secrets:
-      CR_USER: ${{ secrets.CR_USER }}
-      CR_PWD: ${{ secrets.CR_PWD }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger workflow in DPE-Energy-Performance-Analysis-ETL repo
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          repository: fereol023/DPE-Energy-Performance-Analysis-ETL
+          workflow: github-volt-api-img-build-and-deploy.yml
+          ref: main
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: |
+            GIT_TAG: ${{ needs.fetch-new-tag.outputs.new_tag }}
+          secrets: |
+            CR_USER: ${{ secrets.CR_USER }}
+            CR_PWD: ${{ secrets.CR_PWD }}
+          

@@ -1,0 +1,60 @@
+FROM python:3.12-slim-bookworm AS builder 
+# solution reddit pour cette img de base
+WORKDIR /app
+ENV VENV=/app/venv
+RUN apt-get update && apt-get install -y zlib1g
+
+# --ceci installe uv dans usr/local/bin/uv
+RUN /usr/local/bin/python3 -m ensurepip
+RUN /usr/local/bin/pip3 install uv
+# --utiliser ce uv pour créer le venv dans /app/venv
+RUN /usr/local/bin/uv venv $VENV --python python3.12
+# --assurer d'avoir pip installé dans ce venv + installer sinon 
+# RUN $VENV/bin/python -m ensurepip
+# maj pip + install uv
+#RUN $VENV/bin/pip3 install --upgrade pip && \
+#    $VENV/bin/pip3 install uv
+# uv va utiliser le python de l'env et 
+#RUN $VENV/bin/uv venv $VENV --python python3.12
+# if you have a uv.lock file, copy it and use it to sync dependencies
+
+COPY ../pyproject.toml uv.lock* /app/
+RUN if [ -f "/app/uv.lock" ]; then \
+        uv sync --locked; \
+    else \
+        uv sync; \
+    fi
+RUN uv add uv
+# -- copier le reste des fichiers
+COPY ../ .
+
+
+# COPY requirements.txt ./
+# RUN apt-get update && apt-get install -y zlib1g
+# RUN python -m venv $VENV
+# RUN $VENV/bin/python -m ensurepip
+# RUN $VENV/bin/pip3 install --no-cache-dir -r requirements.txt
+# ENV PATH="$VENV/bin:$PATH"
+# COPY . .
+
+####
+# ko -> il force pour aller chercher python dans usr/bin/python3.11
+# FROM gcr.io/distroless/python3 as final
+######
+
+FROM gcr.io/distroless/base-debian12 AS final
+# FROM python:3.12-slim AS final
+ENV VENV=/app/venv
+COPY --from=builder /app /app
+# on a besoin de usr/local car dans le venv, python est redirigé vers le python exe de usr/local
+# sans ça, il va fail au moment d'exécuter (voir image temoin)
+COPY --from=builder /usr/local /usr/local 
+COPY --from=builder /usr/lib /usr/lib
+ENV PATH="$VENV/bin:$PATH"
+WORKDIR /app
+ENV PYTHONPATH="$VENV/bin"
+ENV UV_PYTHON=$VENV/bin/python3
+# CMD ["python3", "check.py"]
+# CMD ["streamlit", "run", "main.py"]
+
+CMD ["uv", "run", "api/main.py", "--no-prefect"]

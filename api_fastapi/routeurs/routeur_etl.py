@@ -1,8 +1,9 @@
-import os, asyncio, subprocess
+import os, asyncio, subprocess, pathlib, sys
 from fastapi import APIRouter, HTTPException
 
 # import engine_test
-from etl_engine.src.dpe_enedis_ademe_etl_engine.pipelines import DataEnedisAdemeETL
+sys.path.append(str(pathlib.Path(__file__).parent.parent.parent.parent))
+from src.dpe_enedis_ademe_etl_engine.pipelines import DataEnedisAdemeETL
 
 router = APIRouter(tags=["ETL module"])
 
