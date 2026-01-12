@@ -1,15 +1,17 @@
+import os
+import re
+import json
+import time
+import yaml
+import pickle
+import logging
+
 import numpy as np
 import pandas as pd
 from functools import lru_cache
 from unidecode import unidecode
 from datetime import datetime
 
-import os
-import re
-import json
-import yaml
-import pickle
-import logging
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,30 +92,34 @@ def load_yaml_config(fpath):
     return load_yaml(fpath, default_value={})
 
 
-def set_config_as_env_var(dirpath='config/', filename=None, debug=False):
+def set_config_as_env_var(dirpath='config/', filename=None, debug=False, bypass_env=False):
     """if value is dict use eval(dict) to return to it to dicrt instead of str"""
-    if os.getenv('ENV') == None: # si vrai les variables d'env sont probablement definies déja (mode nolocal)
+    if (os.getenv('ENV') == None) or (bypass_env): # si vrai les variables d'env sont probablement definies déja (mode nolocal)
         try:
+            if debug: 
+                logging.warning(f"Loading envs var from folder : {dirpath}")
             config = {}
             if filename is None:
                 for filename in os.listdir(dirpath):
-                    if filename.endswith('.yaml'):
-                        config.update(load_yaml_config(os.path.join(dirpath, f)))
+                    if filename.endswith('.yml'):
+                        config.update(load_yaml_config(os.path.join(dirpath, filename)))
                     if filename.endswith('.json'):
-                        config.update(load_json_config(os.path.join(dirpath, f)))
+                        config.update(load_json_config(os.path.join(dirpath, filename)))
             else:
-                if filename.endswith('.yaml'):
+                if filename.endswith('.yml'):
                     config.update(load_yaml_config(os.path.join(dirpath, filename)))
                 if filename.endswith('.json'):
                     config.update(load_json_config(os.path.join(dirpath, filename)))
             appname, env = config.get('API-NAME'), config.get('ENV')
-            assert env in ['LOCAL', 'NOLOCAL'], f"Config error : ENV ({env}) is not valid. Choose between ['LOCAL', 'NOLOCAL']"
+            if not bypass_env: 
+                assert env in ['LOCAL', 'NOLOCAL'], f"Config error : ENV ({env}) is not valid. Choose between ['LOCAL', 'NOLOCAL']"
             logging.info(f"Application {appname} is running on env {env}")
             for key, value in config.items():
                 if debug:
-                    print(f"Setting config : {key} = {value}")
+                    print(f"Setting config : {key} = {value}", end="\r", flush=True) # flush desactive le buffering du terminal et force affichage immediat
+                    time.sleep(.1)
                 os.environ[key] = str(value)
         except Exception as e:
             print(f"Excetion while setting config : {e}")
     else:
-        print("Config already set")
+        print(f"Config already set from ENV var : {os.getenv('ENV')} - processing {dirpath}/{filename} bypassed.")

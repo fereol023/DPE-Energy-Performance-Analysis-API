@@ -18,7 +18,12 @@ from api_utils.controller import dbC, adressesC, logementsC
 from ressources.models.v1.model_config import InputModel as InputModelv1
 
 
-redis_client = redis.Redis(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0, decode_responses=True)
+def get_redis_client(): 
+    try:
+        return redis.Redis(host=os.getenv('REDIS_HOST'), port=int(os.getenv('REDIS_PORT')), db=0, decode_responses=True)
+    except Exception as e:
+        raise Exception(f"Redis connection error: {e}")
+    
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login-with-otp")
 
 class OTPRequest(BaseModel):
@@ -30,6 +35,7 @@ class OTPLogin(BaseModel):
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """dependance : Vérifie le token"""
+    redis_client = get_redis_client()
     role = redis_client.get(f"token:{token}")
     if not role:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalide ou expiré")
@@ -66,7 +72,7 @@ def save_user_mail(email: str):
 router = APIRouter(
     prefix="",
     tags=['database'],
-    dependencies=[Depends(get_current_user)]
+    # dependencies=[Depends(get_current_user)]
 )
 
 auth_router = APIRouter(
@@ -81,6 +87,7 @@ def send_otp(request: OTPRequest):
     """
     save_user_mail(request.email)
     otp = str(secrets.randbelow(100000)).zfill(5)
+    redis_client = get_redis_client()
     redis_client.setex(f"otp:{request.email}", 300, otp)  # TTL: 5 min
 
     SMTP_SERVER = os.getenv("SMTP_SERVER")
@@ -101,6 +108,8 @@ def send_otp(request: OTPRequest):
             server.sendmail(SMTP_USERNAME, request.email, msg.as_string())
             return {"message": f"OTP envoyé à {request.email} : {body}"}
     except Exception as e:
+        #print(f"Erreur SMTP : {str(e)}")
+        #print(locals())
         raise HTTPException(status_code=500, detail=f"Erreur SMTP : {str(e)}")
 
 
@@ -111,6 +120,7 @@ def login_with_otp(data: OTPLogin, response: Response):
     :returns message with token inside, useful for streamlit to post treat,
     can also set directly to client
     """
+    redis_client = get_redis_client()
     stored_otp = redis_client.get(f"otp:{data.email}")
     if not stored_otp or stored_otp != data.otp:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="OTP invalide ou expiré")
@@ -149,7 +159,9 @@ def get_user(user=Depends(get_current_user)):
 ###   Router bdd
 #################
 @router.get("/db")
-async def init_db_require_admin_level_access(user: dict = Depends(require_role(["admin"]))):
+async def init_db_require_admin_level_access(
+    #user: dict = Depends(require_role(["admin"]))
+    ):
     try:
         dbC.init()
         state = "ready"
@@ -165,14 +177,18 @@ async def init_db_require_admin_level_access(user: dict = Depends(require_role([
 #### adresses 
 @my_exception_handler
 @router.get("/db/reader/adresses/getall")
-async def get_all_adresses_require_admin_level_access(request: Request, user: dict = Depends(require_role(["admin"]))):
+async def get_all_adresses_require_admin_level_access(request: Request, 
+                                                      # user: dict = Depends(require_role(["admin"]))
+                                                      ):
     rep, exp = adressesC.get_all_adresses()
     return {"data": rep, "error": exp}
 
 
 @my_exception_handler
 @router.get("/db/reader/adresses/searchadress/{searched}")
-async def search_similar_adresses_require_reader_level_access(request: Request, searched: str, user: dict = Depends(require_role(["reader", "admin"]))):
+async def search_similar_adresses_require_reader_level_access(request: Request, searched: str, 
+                                                              # user: dict = Depends(require_role(["reader", "admin"]))
+                                                              ):
     """
     Get all adresses similar to the searched one.
     :param searched: the searched address
@@ -184,7 +200,9 @@ async def search_similar_adresses_require_reader_level_access(request: Request, 
 
 @my_exception_handler
 @router.get("/db/reader/adresses/getone/{searched_adress}")
-async def get_one_adresses_require_reader_level_access(request: Request, searched_adress: str, user: dict = Depends(require_role(["reader", "admin"]))):
+async def get_one_adresses_require_reader_level_access(request: Request, searched_adress: str, 
+                                                       # user: dict = Depends(require_role(["reader", "admin"]))
+                                                       ):
     """
     Get all adresses similar to the searched one.
     :param searched: the searched address
@@ -200,7 +218,9 @@ async def get_one_adresses_require_reader_level_access(request: Request, searche
 
 @my_exception_handler
 @router.get("/db/reader/adresses/cities")
-async def get_cities_names_and_codes_reader_level(request: Request, user: dict = Depends(require_role(["reader", "admin"]))):
+async def get_cities_names_and_codes_reader_level(request: Request, 
+                                                  # user: dict = Depends(require_role(["reader", "admin"]))
+                                                  ):
     """
     Get all cities names and codes from the database.
     :return: a list of cities names and codes
@@ -210,7 +230,9 @@ async def get_cities_names_and_codes_reader_level(request: Request, user: dict =
 
 @my_exception_handler
 @router.get("/db/reader/adresses/{city_name}/allcoords")
-async def get_coord_by_city_name_reader_level(request: Request, city_name: str, user: dict = Depends(require_role(["reader", "admin"]))):
+async def get_coord_by_city_name_reader_level(request: Request, city_name: str, 
+                                              # user: dict = Depends(require_role(["reader", "admin"]))
+                                              ):
     """
     Get longitudes, latitudes by city name.
     :return: a list of cities names
@@ -222,7 +244,9 @@ async def get_coord_by_city_name_reader_level(request: Request, city_name: str, 
 #### logements
 @my_exception_handler
 @router.get("/db/reader/logements/getall")
-async def get_all_logements_reader_level(request: Request, user: dict = Depends(require_role(["reader", "admin"]))):
+async def get_all_logements_reader_level(request: Request, 
+                                         # user: dict = Depends(require_role(["reader", "admin"]))
+                                         ):
     """
     Get all logements from the database
     :return: list of logements
@@ -232,7 +256,9 @@ async def get_all_logements_reader_level(request: Request, user: dict = Depends(
 
 @my_exception_handler
 @router.get("/db/reader/logements/getbyadress/{searched}")
-async def get_logements_by_adress_reader_level(request: Request, searched: str, user: dict = Depends(require_role(["reader", "admin"]))):
+async def get_logements_by_adress_reader_level(request: Request, searched: str, 
+                                               # user: dict = Depends(require_role(["reader", "admin"]))
+                                            ):
     """
     Get all logements from the database by address (label_ademe).
     :param searched: the searched address
@@ -274,7 +300,7 @@ async def get_model_config(version):
 async def predict(data: List[InputModelv1]):
     try:
         df = pd.DataFrame([item.dict() for item in data]).sort_index(axis=1)
-        model = load_pickle('ressources/models/v1/RF3_new_version_wo_vd.pkl', is_optional=False)
+        model = load_pickle('api/ressources/models/v1/RF3_new_version_wo_vd.pkl', is_optional=False)
         df = df[model.feature_names_in_]
         predictions = model.predict(df)
         return {'predictions': predictions.tolist(), 'error': []}

@@ -5,17 +5,13 @@ import psutil
 import logging
 import asyncio
 import threading
-from fastapi import FastAPI, Request, Response
 from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from prefect.workers.process import ProcessWorker
 
 from prometheus_client import (
     start_http_server, Gauge, Counter, generate_latest, CONTENT_TYPE_LATEST, REGISTRY
-)
-
-from api_fastapi.routeurs import (
-    routeur_bdd, routeur_etl, routeur_services
 )
 
 from api_utils.commons import get_env_variable
@@ -24,14 +20,13 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-
 API_NAME = get_env_variable("API_NAME", default_value="DPE-ENEDIS-ADEME-API-SERVER", compulsory=True)
 API_DESCR = get_env_variable("API_DESCRIPTION", default_value="API backend for DPE Energy Performance Analysis")
 API_VERSION = get_env_variable("API_VERSION", default_value="1.0.0", compulsory=True) # TODO lire depuis le fichier VERSION a la racine
 
+# logger = logging.getLogger(API_NAME)
 logger = logging.getLogger(API_NAME)
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
 
 # prometheus gauges
 YAPPI_GAUGE = Gauge("yappi_function_cpu_seconds", "CPU time per Python function", ["module", "function"]) # CPU gauge
@@ -53,18 +48,20 @@ def run_worker():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # global worker
     #worker = ProcessWorker(work_pool_name="dpe-api-prefect-agent")
     #await worker.start()
     global worker_thread
-    # Démarrer le thread du worker
-    worker_thread = threading.Thread(target=run_worker, daemon=True)
-    worker_thread.start()
-    logger.info("✅ Prefect worker started")
+    if get_env_variable("DPE_API_PREFECT_WORKER", compulsory=True, default_value="1", cast_to_type=int) > 0:
+        # démarrer le thread du worker
+        worker_thread = threading.Thread(target=run_worker, daemon=True)
+        worker_thread.start()
+        logger.info("✅ Prefect worker thread started")
+    else:
+        logger.info("📍 Prefect worker thread is disabled")
     try: 
         yield
     finally:
-        print("shut down worker agent")
+        logger.info("Shutting down worker agent")
 
 
 app = FastAPI(
@@ -72,7 +69,7 @@ app = FastAPI(
     description = API_DESCR,
     version = API_VERSION,
     docs_url = "/docs",
-    lifespan=lifespan
+    lifespan=lifespan 
 )
 
 # middleware CORS : allow all origins for simplicity
@@ -203,6 +200,11 @@ async def get_kwh_price():
 async def limited_endpoint(request: Request):
     """up to 5 requests per minute per IP"""
     return {"message": "You can call this endpoint up to 5 times per minute."}
+
+
+from api_fastapi.routeurs import (
+    routeur_bdd, routeur_etl, routeur_services
+)
 
 app.include_router(routeur_bdd.auth_router)
 app.include_router(routeur_bdd.router)
