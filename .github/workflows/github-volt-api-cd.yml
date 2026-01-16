@@ -47,5 +47,5 @@ jobs:
           gh workflow run github-volt-api-img-build-and-deploy.yml \
             --repo fereol023/DPE-Energy-Performance-Analysis-ETL \
             --ref main \
-            -f api_tag=${{ needs.fetch-new-tag.outputs.new-tag }}
+            -f api_tag= "${{ needs.fetch-new-tag.outputs.new_tag }}"
         # passed the tag here with the varname expected in inputs of the called workflow
